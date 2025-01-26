@@ -27,8 +27,8 @@ public class AppaController {
 
     // GET a task by ID
     @GetMapping("/{id}")
-    public Tasks getTaskById(@PathVariable Long id) {
-        return tasksRepository.findById(id).orElse(null);
+    public ResponseEntity<Tasks> getTaskById(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.OK).body(tasksRepository.findById(id).orElse(null));
     }
 
     // CREATE
@@ -37,7 +37,7 @@ public class AppaController {
     public ResponseEntity<Tasks> createTask(@Valid @RequestBody Tasks task) {
         try {
             if (task.getId() != null) {
-                System.out.println(task.getId()+" "+ task.getTaskText()+" "+task.getName());
+                System.out.println(task.getId() + " " + task.getTaskText() + " " + task.getName());
                 return ResponseEntity.badRequest().body(null); // ID must be null for new tasks
             }
             Tasks savedTask = tasksRepository.save(task);
@@ -50,18 +50,25 @@ public class AppaController {
     }
 
 
-
     // UPDATE
     @PutMapping("/{id}")
-    public Tasks updateTask(@PathVariable Long id, @RequestBody Tasks updatedTask) {
-        Tasks task = tasksRepository.findById(id).orElse(null);
-        if (task != null) {
-            task.setName(updatedTask.getName());
-            task.setTaskText(updatedTask.getTaskText());
-            return tasksRepository.save(task);
+    public ResponseEntity<Tasks> updateTask(@PathVariable Long id, @RequestBody Tasks updatedTask) {
+        try {
+            Tasks task = tasksRepository.findById(id).orElse(null);
+            if (task != null) {
+                task.setName(updatedTask.getName());
+                task.setTaskText(updatedTask.getTaskText());
+                tasksRepository.save(task);
+                return ResponseEntity.status(HttpStatus.CREATED).body(task);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // Log exception details
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
         return null;
     }
+
 
     // DELETE
     @DeleteMapping("/{id}")
